@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#12151c">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Remote TV">
+<title>Remote TV</title>
+<style>
+:root{color-scheme:dark;--bg:#12151c;--card:#1b2030;--btn:#272e45;--btn-a:#3a4466;--text:#e8ecf5;--muted:#8d97b0;--ok:#35c27a;--bad:#ef5a5a;--accent:#4da3ff;
+--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overscroll-behavior:none}
+body{min-height:100dvh;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+button{font:inherit;color:inherit;background:var(--btn);border:0;border-radius:16px;min-height:52px;cursor:pointer;touch-action:manipulation;transition:background .08s,transform .06s}
+button:active,button.hold{background:var(--btn-a);transform:scale(.95)}
+button:disabled{opacity:.4}
+header{position:sticky;top:0;z-index:5;background:rgba(18,21,28,.92);backdrop-filter:blur(10px);padding:calc(var(--sat) + 10px) 16px 10px;display:flex;align-items:center;gap:10px;border-bottom:1px solid #232a3d}
+header .dot{width:11px;height:11px;border-radius:50%;background:var(--bad);flex:none}
+header .dot.on{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+header .t{flex:1;font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .t small{display:block;font-weight:400;color:var(--muted);font-size:.75rem}
+header button{min-height:40px;padding:0 14px;font-size:.85rem;border-radius:20px}
+main{max-width:480px;margin:0 auto;padding:16px 16px calc(92px + var(--sab))}
+.tab{display:none}.tab.on{display:block}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.row4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.pw{background:#c0392b;font-size:1.3rem}.pw:active{background:#e04a39}
+.lbl{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:18px 4px 8px}
+
+/* vòng điều hướng */
+.ring{position:relative;width:min(74vw,280px);aspect-ratio:1;margin:20px auto;border-radius:50%;background:var(--card);box-shadow:inset 0 0 0 2px #272e45}
+.ring button{position:absolute;background:transparent;width:32%;height:32%;min-height:0;border-radius:50%;font-size:1.7rem;color:var(--muted)}
+.ring button:active{background:var(--btn-a);color:var(--text)}
+.ring .u{top:5%;left:34%}.ring .d{bottom:5%;left:34%}.ring .l{left:5%;top:34%}.ring .r{right:5%;top:34%}
+.ring .ok{inset:32%;width:auto;height:auto;background:var(--accent);color:#06131f;font-weight:800;font-size:1.2rem}
+.ring .ok:active{background:#7ebcff}
+
+/* âm lượng, kênh */
+.vc{display:grid;grid-template-columns:1fr 78px 1fr;gap:12px;margin-top:18px;align-items:stretch}
+.rocker{display:grid;grid-template-rows:1fr auto 1fr;background:var(--card);border-radius:40px;overflow:hidden;min-height:190px}
+.rocker button{border-radius:0;background:transparent;font-size:1.6rem;min-height:70px}
+.rocker button:active{background:var(--btn-a)}
+.rocker .n{text-align:center;font-size:.75rem;letter-spacing:.08em;color:var(--muted);padding:2px 0}
+.mid{display:grid;gap:12px;align-content:center}
+.mid button{border-radius:50%;aspect-ratio:1;min-height:0;font-size:1.2rem}
+
+/* bàn phím số */
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.keys button{min-height:66px;font-size:1.5rem;font-weight:600}
+.cl{height:50px;border-radius:25px;font-size:0}
+.cl.red{background:#c0392b}.cl.green{background:#2e9e5b}.cl.yellow{background:#d4a017}.cl.blue{background:#2f6fc9}
+.app{min-height:84px;font-size:1rem;font-weight:600}
+
+/* kết nối */
+.card{background:var(--card);border-radius:18px;padding:16px}
+select,input[type=text]{width:100%;background:var(--btn);color:var(--text);border:1px solid #3a4260;border-radius:12px;padding:14px;font-size:16px;margin-bottom:10px;-webkit-user-select:text;user-select:text}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:.85rem;color:var(--muted);margin:2px 0 14px;line-height:1.4}
+.chk input{width:20px;height:20px;flex:none;margin:0}
+.go{background:var(--accent);color:#06131f;font-weight:700;width:100%;margin-bottom:10px}
+.note{font-size:.8rem;color:var(--muted);line-height:1.55}
+#log{height:120px;overflow:auto;font:11px/1.4 ui-monospace,Menlo,Consolas,monospace;background:#0c0f15;border-radius:10px;padding:8px;color:#9fb0d0;white-space:pre-wrap;-webkit-user-select:text;user-select:text;margin-top:12px}
+
+nav{position:fixed;left:0;right:0;bottom:0;z-index:6;display:grid;grid-template-columns:repeat(4,1fr);background:rgba(24,28,42,.96);backdrop-filter:blur(12px);border-top:1px solid #272e45;padding:6px 6px calc(6px + var(--sab))}
+nav button{background:transparent;border-radius:12px;min-height:54px;color:var(--muted);font-size:.7rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+nav button i{font-style:normal;font-size:1.35rem;line-height:1}
+nav button.on{color:var(--accent)}
+nav button:active{transform:none;background:#272e45}
+
+@media (max-height:640px) and (orientation:landscape){
+ main{max-width:760px}
+ .ring{width:200px;margin:10px auto}
+}
+@media (min-width:600px){body{background:#0c0f15}main{background:var(--bg)}}
+</style>
+</head>
+<body>
+<header>
+ <span class="dot" id="dot"></span>
+ <div class="t"><span id="stTitle">Chưa kết nối</span><small id="stSub">Chạm để cài đặt</small></div>
+ <button id="hdrBtn">Kết nối</button>
+</header>
+
+<main>
+ <!-- Tab: Điều khiển -->
+ <section class="tab on" id="t-remote">
+  <div class="row3">
+   <button class="pw" data-k="power">⏻</button>
+   <button data-k="source" id="srcBtn">Nguồn vào</button>
+   <button data-k="info">ℹ︎ Info</button>
+  </div>
+
+  <div class="ring">
+   <button class="u" data-k="up" data-rep>▲</button>
+   <button class="l" data-k="left" data-rep>◀</button>
+   <button class="ok" data-k="ok">OK</button>
+   <button class="r" data-k="right" data-rep>▶</button>
+   <button class="d" data-k="down" data-rep>▼</button>
+  </div>
+
+  <div class="row3">
+   <button data-k="back">↩︎ Back</button>
+   <button data-k="home">⌂ Home</button>
+   <button data-k="menu">☰ Menu</button>
+  </div>
+
+  <div class="vc">
+   <div class="rocker"><button data-k="volup" data-rep>＋</button><div class="n">ÂM LƯỢNG</div><button data-k="voldown" data-rep>－</button></div>
+   <div class="mid"><button data-k="mute">🔇</button><button data-k="exit">✕</button></div>
+   <div class="rocker"><button data-k="chup" data-rep>⌃</button><div class="n">KÊNH</div><button data-k="chdown" data-rep>⌄</button></div>
+  </div>
+ </section>
+
+ <!-- Tab: Số và phím màu -->
+ <section class="tab" id="t-keys">
+  <div class="keys" id="nums"></div>
+  <div class="lbl">Phát lại</div>
+  <div class="row4">
+   <button data-k="rew">⏪</button><button data-k="play">▶</button><button data-k="pause">⏸</button><button data-k="ff">⏩</button>
+  </div>
+  <div class="lbl">Phím màu</div>
+  <div class="row4">
+   <button class="cl red" data-k="red">.</button><button class="cl green" data-k="green">.</button><button class="cl yellow" data-k="yellow">.</button><button class="cl blue" data-k="blue">.</button>
+  </div>
+  <div class="lbl">Khác</div>
+  <div class="row3"><button data-k="guide">Guide</button><button data-k="info">Info</button><button data-k="exit">Exit</button></div>
+ </section>
+
+ <!-- Tab: Ứng dụng -->
+ <section class="tab" id="t-apps">
+  <div class="row3">
+   <button class="app" data-app="netflix">Netflix</button>
+   <button class="app" data-app="youtube">YouTube</button>
+   <button class="app" data-app="prime">Prime Video</button>
+  </div>
+ </section>
+
+ <!-- Tab: Kết nối -->
+ <section class="tab" id="t-conn">
+  <div class="card">
+   <select id="brand"><option value="lg">LG (webOS)</option><option value="samsung">Samsung (Tizen)</option></select>
+   <input type="text" id="ip" placeholder="IP tivi, ví dụ 192.168.1.50" inputmode="decimal" autocomplete="off">
+   <label class="chk"><input type="checkbox" id="secure"><span id="secureLbl"></span></label>
+   <button class="go" id="conn">Kết nối</button>
+   <button id="disc" style="width:100%" disabled>Ngắt kết nối</button>
+  </div>
+  <p class="note" style="margin:14px 4px">
+   Điện thoại và tivi phải cùng Wi-Fi. Lần đầu, tivi sẽ hiện hộp thoại xin quyền, hãy chọn Cho phép.<br>
+   Mẹo: ở trình duyệt, chọn <b>Thêm vào Màn hình chính</b> để dùng như một ứng dụng toàn màn hình.
+  </p>
+  <div id="log"></div>
+ </section>
+</main>
+
+<nav>
+ <button data-tab="remote" class="on"><i>🎮</i>Điều khiển</button>
+ <button data-tab="keys"><i>🔢</i>Số &amp; màu</button>
+ <button data-tab="apps"><i>▦</i>Ứng dụng</button>
+ <button data-tab="conn"><i>📡</i>Kết nối</button>
+</nav>
+
+<script>
+const $=id=>document.getElementById(id);
+const brandEl=$('brand'),ipEl=$('ip'),secEl=$('secure');
+let ws=null,ptr=null,connected=false,muted=false,reqId=0,wake=null;
+const cbs={};
+
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+brandEl.value=store.get('tv.brand')||'lg';ipEl.value=store.get('tv.ip')||'';secEl.checked=store.get('tv.secure.'+brandEl.value)==='1';
+
+function log(m){const l=$('log');l.textContent+=m+'\n';l.scrollTop=l.scrollHeight;}
+function showTab(n){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.id==='t-'+n));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===n));window.scrollTo(0,0);}
+function setStatus(on,t){
+ const was=connected;connected=on;
+ $('dot').className='dot'+(on?' on':'');
+ $('stTitle').textContent=on?'Đã kết nối':'Chưa kết nối';
+ $('stSub').textContent=t;
+ $('conn').disabled=on;$('disc').disabled=!on;
+ $('hdrBtn').textContent=on?'Ngắt':'Kết nối';
+ if(on&&!was){showTab('remote');keepAwake(true);buzz(30);}
+ if(!on&&was)keepAwake(false);
+}
+async function keepAwake(on){try{if(on&&navigator.wakeLock)wake=await navigator.wakeLock.request('screen');else if(wake){await wake.release();wake=null;}}catch(e){}}
+function buzz(ms){try{if(navigator.vibrate)navigator.vibrate(ms)}catch(e){}}
+
+function refreshUI(){
+ const lg=brandEl.value==='lg';
+ $('secureLbl').textContent=lg?'Dùng kết nối bảo mật wss, cổng 3001 (tivi LG đời mới)':'Dùng cổng 8002 (wss). Bỏ chọn để dùng cổng 8001 (Samsung đời cũ)';
+ if(!lg&&store.get('tv.secure.samsung')===null)secEl.checked=true;
+ $('srcBtn').disabled=lg;
+}
+brandEl.onchange=()=>{secEl.checked=store.get('tv.secure.'+brandEl.value)==='1';refreshUI();};
+refreshUI();
+
+/* ---------- bảng ánh xạ ---------- */
+const LG_BTN={up:'UP',down:'DOWN',left:'LEFT',right:'RIGHT',ok:'ENTER',back:'BACK',home:'HOME',menu:'MENU',exit:'EXIT',info:'INFO',guide:'GUIDE',red:'RED',green:'GREEN',yellow:'YELLOW',blue:'BLUE'};
+const LG_SSAP={volup:'audio/volumeUp',voldown:'audio/volumeDown',chup:'tv/channelUp',chdown:'tv/channelDown',power:'system/turnOff',play:'media.controls/play',pause:'media.controls/pause',rew:'media.controls/rewind',ff:'media.controls/fastForward'};
+const LG_APPS={netflix:'netflix',youtube:'youtube.leanback.v4',prime:'amazon'};
+const SS_KEY={up:'UP',down:'DOWN',left:'LEFT',right:'RIGHT',ok:'ENTER',back:'RETURN',home:'HOME',menu:'MENU',exit:'EXIT',info:'INFO',guide:'GUIDE',source:'SOURCE',volup:'VOLUP',voldown:'VOLDOWN',mute:'MUTE',chup:'CHUP',chdown:'CHDOWN',power:'POWER',play:'PLAY',pause:'PAUSE',rew:'REWIND',ff:'FF',red:'RED',green:'GREEN',yellow:'YELLOW',blue:'BLUE'};
+const SS_APPS={netflix:'11101200001',youtube:'111299001912',prime:'3201512006785'};
+
+/* ---------- LG webOS ---------- */
+function lgManifest(){
+ const perms=['LAUNCH','LAUNCH_WEBAPP','APP_TO_APP','CLOSE','TEST_OPEN','TEST_PROTECTED','CONTROL_AUDIO','CONTROL_DISPLAY','CONTROL_INPUT_JOYSTICK','CONTROL_INPUT_MEDIA_RECORDING','CONTROL_INPUT_MEDIA_PLAYBACK','CONTROL_INPUT_TV','CONTROL_POWER','READ_APP_STATUS','READ_CURRENT_CHANNEL','READ_INPUT_DEVICE_LIST','READ_NETWORK_STATE','READ_RUNNING_APPS','READ_TV_CHANNEL_LIST','WRITE_NOTIFICATION_TOAST','READ_POWER_STATE','READ_COUNTRY_INFO'];
+ return {manifestVersion:1,appVersion:'1.1',permissions:perms,signed:{appId:'com.lge.test',vendorId:'com.lge',created:'20140509',localizedAppNames:{'':'Web Remote'},localizedVendorNames:{'':'LG Electronics'},permissions:perms,serial:'2f930e2d2cfe083771f68e4fe7bb07'}};
+}
+function lgReq(uri,payload){
+ const id='r'+(++reqId);
+ return new Promise(res=>{cbs[id]=res;ws.send(JSON.stringify({type:'request',id,uri:'ssap://'+uri,payload:payload||{}}));setTimeout(()=>{delete cbs[id];res(null)},5000);});
+}
+function lgConnect(ip,secure){
+ const url=secure?'wss://'+ip+':3001':'ws://'+ip+':3000';
+ log('Kết nối '+url);
+ ws=new WebSocket(url);
+ ws.onopen=()=>{
+  const key=store.get('tv.lgkey.'+ip);
+  const payload={forcePairing:false,pairingType:'PROMPT',manifest:lgManifest()};
+  if(key)payload['client-key']=key;
+  ws.send(JSON.stringify({type:'register',id:'register_0',payload}));
+  setStatus(false,'Hãy bấm Cho phép trên tivi...');
+ };
+ ws.onmessage=async e=>{
+  const m=JSON.parse(e.data);log('← '+e.data.slice(0,160));
+  if(m.type==='registered'){
+   store.set('tv.lgkey.'+ip,m.payload['client-key']);
+   setStatus(true,'LG · '+ip);
+   const r=await lgReq('com.webos.service.networkinput/getPointerInputSocket');
+   if(r&&r.payload&&r.payload.socketPath){ptr=new WebSocket(r.payload.socketPath);ptr.onopen=()=>log('Đã mở kênh phím điều hướng');ptr.onerror=()=>log('Lỗi kênh phím');}
+  }else if(m.type==='error'){log('Lỗi: '+m.error);}
+  else if(m.id&&cbs[m.id]){cbs[m.id](m);delete cbs[m.id];}
+ };
+ wsCommon();
+}
+function lgSend(k){
+ if(LG_BTN[k]&&ptr&&ptr.readyState===1){ptr.send('type:button\nname:'+LG_BTN[k]+'\n\n');return;}
+ if(k==='mute'){muted=!muted;lgReq('audio/setMute',{mute:muted});return;}
+ if(/^n\d$/.test(k)&&ptr&&ptr.readyState===1){ptr.send('type:button\nname:'+k[1]+'\n\n');return;}
+ if(LG_SSAP[k]){lgReq(LG_SSAP[k]);return;}
+ log('LG: chưa hỗ trợ phím '+k);
+}
+
+/* ---------- Samsung Tizen ---------- */
+function ssConnect(ip,secure){
+ const name=btoa('Web Remote'),tok=store.get('tv.sstoken.'+ip);
+ const url=secure?'wss://'+ip+':8002/api/v2/channels/samsung.remote.control?name='+name+(tok?'&token='+tok:''):'ws://'+ip+':8001/api/v2/channels/samsung.remote.control?name='+name;
+ log('Kết nối '+url.replace(/token=.*/,'token=***'));
+ ws=new WebSocket(url);
+ ws.onopen=()=>setStatus(false,'Hãy bấm Cho phép trên tivi...');
+ ws.onmessage=e=>{
+  const m=JSON.parse(e.data);log('← '+e.data.slice(0,160));
+  if(m.event==='ms.channel.connect'){
+   if(m.data&&m.data.token)store.set('tv.sstoken.'+ip,m.data.token);
+   setStatus(true,'Samsung · '+ip);
+  }else if(m.event==='ms.channel.unauthorized'){setStatus(false,'Tivi từ chối kết nối');}
+ };
+ wsCommon();
+}
+function ssSend(k){
+ if(/^n\d$/.test(k)){ssKey('KEY_'+k[1]);return;}
+ if(SS_KEY[k])ssKey('KEY_'+SS_KEY[k]);else log('Samsung: chưa hỗ trợ phím '+k);
+}
+function ssKey(key){ws.send(JSON.stringify({method:'ms.remote.control',params:{Cmd:'Click',DataOfCmd:key,Option:'false',TypeOfRemote:'SendRemoteKey'}}));log('→ '+key);}
+
+/* ---------- chung ---------- */
+function wsCommon(){
+ ws.onerror=()=>{log('Không kết nối được. Kiểm tra IP và Wi-Fi. Với kết nối bảo mật, hãy mở https://IP:cổng trên trình duyệt để chấp nhận chứng chỉ trước.');setStatus(false,'Lỗi kết nối');};
+ ws.onclose=()=>{if(ptr){try{ptr.close()}catch(e){}ptr=null;}if(connected)setStatus(false,'Đã ngắt kết nối');};
+}
+function doConnect(){
+ const ip=ipEl.value.trim();
+ if(!/^[\w.\-]+$/.test(ip)){setStatus(false,'IP không hợp lệ');showTab('conn');return;}
+ store.set('tv.brand',brandEl.value);store.set('tv.ip',ip);store.set('tv.secure.'+brandEl.value,secEl.checked?'1':'0');
+ try{brandEl.value==='lg'?lgConnect(ip,secEl.checked):ssConnect(ip,secEl.checked);}catch(err){log(String(err));setStatus(false,'Lỗi: '+err.message);}
+}
+function doDisconnect(){if(ws)ws.close();}
+$('conn').onclick=doConnect;$('disc').onclick=doDisconnect;
+$('hdrBtn').onclick=()=>connected?doDisconnect():(ipEl.value.trim()?doConnect():showTab('conn'));
+document.querySelector('header .t').onclick=()=>showTab('conn');
+
+function send(k){
+ buzz(10);
+ if(!connected||!ws||ws.readyState!==1){log('Chưa kết nối tivi');return;}
+ brandEl.value==='lg'?lgSend(k):ssSend(k);
+}
+function launch(app){
+ buzz(10);
+ if(!connected){log('Chưa kết nối tivi');return;}
+ if(brandEl.value==='lg')lgReq('system.launcher/launch',{id:LG_APPS[app]});
+ else ws.send(JSON.stringify({method:'ms.channel.emit',params:{event:'ed.apps.launch',to:'host',data:{action_type:'DEEP_LINK',appId:SS_APPS[app]}}}));
+}
+
+/* ---------- giao diện cảm ứng ---------- */
+const nums=$('nums');
+[1,2,3,4,5,6,7,8,9].forEach(n=>nums.insertAdjacentHTML('beforeend','<button data-k="n'+n+'">'+n+'</button>'));
+nums.insertAdjacentHTML('beforeend','<span></span><button data-k="n0">0</button><span></span>');
+
+// Nhấn là gửi ngay (pointerdown), giữ để lặp lại với phím có data-rep
+let tmo=null,itv=null;
+function stopRep(b){clearTimeout(tmo);clearInterval(itv);if(b)b.classList.remove('hold');}
+document.querySelectorAll('[data-k]').forEach(b=>{
+ b.addEventListener('pointerdown',e=>{
+  e.preventDefault();send(b.dataset.k);
+  if(b.hasAttribute('data-rep')){b.classList.add('hold');tmo=setTimeout(()=>{itv=setInterval(()=>send(b.dataset.k),130)},400);}
+ });
+ ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>stopRep(b)));
+});
+document.querySelectorAll('[data-app]').forEach(b=>b.addEventListener('pointerdown',e=>{e.preventDefault();launch(b.dataset.app);}));
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
+document.addEventListener('contextmenu',e=>e.preventDefault());
+
+// Phím tắt khi dùng trên máy tính
+document.addEventListener('keydown',e=>{
+ if(['INPUT','SELECT'].includes(document.activeElement.tagName))return;
+ const m={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',Enter:'ok',Backspace:'back',Escape:'exit','+':'volup','=':'volup','-':'voldown',m:'mute',M:'mute',PageUp:'chup',PageDown:'chdown'}[e.key];
+ if(m){e.preventDefault();send(m);}
+});
+
+// Tự mở tab Kết nối nếu chưa có IP; tự kết nối lại khi quay lại ứng dụng
+if(!ipEl.value)showTab('conn');
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!connected&&ipEl.value.trim()&&store.get('tv.ip')&&(!ws||ws.readyState>1)&&$('t-remote').classList.contains('on'))doConnect();});
+</script>
+</body>
+</html>
